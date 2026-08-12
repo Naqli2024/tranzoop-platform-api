@@ -2,18 +2,6 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-      required: true,
-    },
-
-    roleId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Role",
-      required: true,
-    },
-
     firstName: {
       type: String,
       required: true,
@@ -22,20 +10,16 @@ const userSchema = new mongoose.Schema(
 
     lastName: {
       type: String,
+      trim: true,
       default: "",
-      trim: true,
-    },
-
-    fullName: {
-      type: String,
-      trim: true,
     },
 
     email: {
       type: String,
+      required: true,
+      unique: true,
       lowercase: true,
       trim: true,
-      default: "",
     },
 
     mobile: {
@@ -48,36 +32,59 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
 
-    avatar: {
+    // Assigned only after Admin/Staff approval
+    roleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
+      default: null,
+    },
+
+    // Account lifecycle
+    status: {
       type: String,
-      default: "",
+      enum: [
+        "PENDING",
+        "ACTIVE",
+        "REJECTED",
+        "SUSPENDED",
+        "EXPIRED",
+      ],
+      default: "PENDING",
     },
 
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
+    approvedAt: {
+      type: Date,
+      default: null,
     },
 
-    isMobileVerified: {
-      type: Boolean,
-      default: false,
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
-    refreshToken: {
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    rejectionReason: {
       type: String,
       default: null,
     },
 
     lastLoginAt: {
       type: Date,
-    },
-
-    status: {
-      type: String,
-      enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
-      default: "ACTIVE",
+      default: null,
     },
   },
   {
@@ -85,11 +92,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.pre("save", function (next) {
-  this.fullName = `${this.firstName} ${this.lastName}`.trim();
-  next();
-});
-
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export default mongoose.model("User", userSchema);

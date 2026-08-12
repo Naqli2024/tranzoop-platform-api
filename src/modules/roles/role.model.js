@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
+import { ROLE_CODES } from "./role.constants.js";
 
 const roleSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
     },
 
@@ -12,13 +14,13 @@ const roleSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      enum: Object.values(ROLE_CODES),
       uppercase: true,
       trim: true,
     },
 
     description: {
       type: String,
-      default: "",
       trim: true,
     },
 

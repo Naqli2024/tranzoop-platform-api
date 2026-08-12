@@ -1,38 +1,96 @@
-import Company from "../companies/company.model.js";
+import { createUser } from "../users/user.service.js";
 import User from "../users/user.model.js";
-import Role from "../roles/role.model.js";
-import OTP from "./otp.model.js";
-import {
-  sendOTP,
-  verifyOTP,
-} from "./otp.service.js";
-import { hashPassword } from "../../shared/password.js";
-
+import { comparePassword } from "../../shared/password.js";
 import {
   generateAccessToken,
   generateRefreshToken,
-  generateRegistrationToken,
 } from "../../shared/jwt.js";
 
-export const sendOtpService = async (mobile) => {
-
-  const companyExists = await Company.findOne({ mobile });
-
-  if (companyExists) {
-    throw new Error("Mobile number is already registered.");
-  }
-
-  return await sendOTP(mobile, "REGISTER");
+export const registerUser = async (userData) => {
+  return createUser(userData);
 };
 
-export const verifyOtpService = async (mobile, otp) => {
 
-  await verifyOTP(mobile, otp, "REGISTER");
+export const loginUser = async (identifier, password) => {
+  const normalizedIdentifier = identifier.trim().toLowerCase();
 
-  const registrationToken =
-    generateRegistrationToken(mobile);
+  const user = await User.findOne({
+    $or: [
+      { email: normalizedIdentifier },
+      { mobile: identifier.trim() },
+    ],
+  })
+    .select("+password")
+    .populate("roleId", "name code permissions");
+
+  if (!user) {
+    const error = new Error(
+      "Invalid email/mobile or password"
+    );
+
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (user.status !== "ACTIVE") {
+    const error = new Error(
+      "Your account is not active"
+    );
+
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const passwordMatched = await comparePassword(
+    password,
+    user.password
+  );
+
+  if (!passwordMatched) {
+    const error = new Error(
+      "Invalid email/mobile or password"
+    );
+
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (!user.roleId) {
+    const error = new Error(
+      "No role assigned to this account"
+    );
+
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const tokenPayload = {
+    sub: user._id.toString(),
+    role: user.roleId.code,
+    permissions: user.roleId.permissions || [],
+  };
+
+  const accessToken = generateAccessToken(tokenPayload);
+
+  const refreshToken = generateRefreshToken({
+    sub: user._id.toString(),
+  });
+
+  user.lastLoginAt = new Date();
+
+  await user.save();
 
   return {
-    registrationToken,
+    user: {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.roleId.code,
+    },
+    permissions: user.roleId.permissions || [],
+    accessToken,
+    refreshToken,
   };
 };

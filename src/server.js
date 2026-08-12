@@ -1,13 +1,16 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import app from "./app.js";
-import connectDB from "./config/database.js";
+import { connectDatabase, env } from "./config/index.js";
+import { seedRoles } from "./modules/roles/role.seed.js";
 
-const PORT = process.env.PORT || 5000;
+const startServer = async () => {
+  await connectDatabase();
+  await seedRoles();
 
-connectDB();
+  app.listen(env.PORT, () => {
+    console.log(
+      `Tranzoop Platform API running on port ${env.PORT}`
+    );
+  });
+};
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+startServer();
