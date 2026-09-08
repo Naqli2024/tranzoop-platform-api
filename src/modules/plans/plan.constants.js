@@ -1,0 +1,9 @@
+export const BILLING_CYCLES = {
+  MONTHLY: "MONTHLY",
+  YEARLY: "YEARLY",
+};
+
+export const PLAN_STATUS = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+};

@@ -14,6 +14,7 @@ const erpAccessSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
 
     businessId: {
@@ -26,6 +27,7 @@ const erpAccessSchema = new mongoose.Schema(
       type: String,
       enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
       default: "ACTIVE",
+      index: true,
     },
   },
   {
