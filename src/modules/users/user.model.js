@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    erpCode: {
+      type: String,
+      lowercase: true,
+      trim: true,
+      default: null,
+      index: true,
+    },
+
     roleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Role",
@@ -41,13 +49,7 @@ const userSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "PENDING",
-        "ACTIVE",
-        "REJECTED",
-        "SUSPENDED",
-        "EXPIRED",
-      ],
+      enum: ["PENDING", "ACTIVE", "REJECTED", "SUSPENDED", "EXPIRED"],
       default: "PENDING",
     },
 
@@ -85,14 +87,11 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Mobile is the unique customer identity
-userSchema.index(
-  { mobile: 1 },
-  { unique: true }
-);
+userSchema.index({ mobile: 1, erpCode: 1 }, { unique: true });
 
 // Email is unique when provided
 userSchema.index(
@@ -100,7 +99,7 @@ userSchema.index(
   {
     unique: true,
     sparse: true,
-  }
+  },
 );
 
 export default mongoose.model("User", userSchema);
